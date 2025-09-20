@@ -1,7 +1,12 @@
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const { getJson } = require('serpapi');
 require('dotenv').config();
+
+// Import routes
+const authRoutes = require('./routes/auth');
+const wishlistRoutes = require('./routes/wishlist');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,32 +17,64 @@ app.use(cors({
     // Expo Metro bundler (main development server)
     'http://localhost:8081',
     'http://10.251.143.142:8081',
-    
+
     // Expo web server
     'http://localhost:19006',
     'http://10.251.143.142:19006',
-    
+
     // Other Expo development ports
     'http://localhost:19000',    // Expo DevTools
     'http://localhost:19001',    // Expo tunnel
     'http://localhost:19002',    // Expo LAN
-    
+
     // Mobile app origins (exp:// protocol)
     'exp://localhost:8081',
     'exp://10.251.143.142:8081',
     'exp://localhost:19000',
     'exp://10.251.143.142:19000',
-    
+
     // Expo tunnel URLs (*.exp.direct domains)
     /https:\/\/.*\.exp\.direct/,
     /exp:\/\/.*\.exp\.direct/,
-    
+
     // Allow all for development (be more restrictive in production)
     '*'
   ],
   credentials: true
 }));
 app.use(express.json());
+
+// MongoDB connection
+const connectDB = async () => {
+  try {
+    const mongoURI = process.env.MONGO_URL;
+    const clientOptions = {
+      family: 4, serverApi: { version: '1', strict: true, deprecationErrors: true},
+    };
+    if (mongoose.connection.readyState !== 1) {
+			console.log("[mongo] Connecting to MongoDB...");
+			await mongoose.connect(mongoURI, clientOptions);
+			console.log("[mongo] Connected to MongoDB.");
+		} else {
+			console.log("[mongo] Already connected.");
+		}
+
+		const db = mongoose.connection.db;
+		if (!db) {
+			throw new Error("Database connection object is undefined after connect.");
+		}
+
+		await db.admin().command({ ping: 1 });
+		console.log("[mongo] Connection verified with ping.");
+  } catch (error) {
+    console.error('❌ [mongo] connection error:', error);
+    process.exit(1);
+  }
+};
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -50,8 +87,8 @@ app.post('/api/search-products', async (req, res) => {
     const { query, location = "United States", num = 3 } = req.body;
 
     if (!query) {
-      return res.status(400).json({ 
-        error: 'Query parameter is required' 
+      return res.status(400).json({
+        error: 'Query parameter is required'
       });
     }
 
@@ -112,9 +149,9 @@ app.post('/api/search-products', async (req, res) => {
 
   } catch (error) {
     console.error('SerpApi search error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: 'Search failed', 
+      error: 'Search failed',
       message: error.message,
       query: req.body.query
     });
@@ -124,15 +161,15 @@ app.post('/api/search-products', async (req, res) => {
 // Error handling middleware
 app.use((error, req, res, next) => {
   console.error('Server error:', error);
-  res.status(500).json({ 
+  res.status(500).json({
     error: 'Internal server error',
-    message: error.message 
+    message: error.message
   });
 });
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ 
+  res.status(404).json({
     error: 'Endpoint not found',
     availableEndpoints: [
       'GET /health',
@@ -143,11 +180,14 @@ app.use((req, res) => {
 
 // Start server with tunnel support
 async function startServer() {
+  // Connect to MongoDB first
+  await connectDB();
+
   const server = app.listen(PORT, () => {
     console.log(`🚀 SerpApi server running on http://localhost:${PORT}`);
     console.log(`📋 Health check: http://localhost:${PORT}/health`);
     console.log(`🔍 Search endpoint: POST http://localhost:${PORT}/api/search-products`);
-    
+
     // Check if SERPAPI_KEY is configured
     if (!process.env.SERPAPI_KEY) {
       console.warn('⚠️  SERPAPI_KEY not found in environment variables');
