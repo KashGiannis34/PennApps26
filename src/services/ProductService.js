@@ -1,27 +1,125 @@
-import axios from 'axios';
+import { NetworkConfig } from '../config/NetworkConfig';
 
 export class ProductService {
-  // Note: This is a simplified implementation. 
-  // In production, you'd need actual API keys and proper endpoints
-  
-  static async searchProducts(productKeywords, productName) {
+  static get SERVER_URL() {
+    return NetworkConfig.getServerUrl();
+  }
+
+  static async searchProducts(productKeywords, productName, location = "United States") {
     try {
-      // Simulate product search results
-      // In a real app, you'd call actual APIs for eBay, Amazon, etc.
-      
-      const mockResults = this.generateMockResults(productKeywords, productName);
-      
-      // Add some delay to simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      return mockResults;
+      // Use our Express server to get Google Shopping results
+      const query = productKeywords.join(' ');
+
+      const requestBody = {
+        query: query,
+        location: location,
+        num: 3
+      };
+
+      console.log('Searching for:', query, 'via server');
+
+      const response = await fetch(`${this.SERVER_URL}/api/search-products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.results && data.results.length > 0) {
+        return this.formatShoppingResults(data.results, productName);
+      } else {
+        console.warn('No shopping results found, using fallback');
+        return this.getFallbackResults(productName);
+      }
     } catch (error) {
       console.error('Product search error:', error);
       return this.getFallbackResults(productName);
     }
   }
 
+  static formatShoppingResults(shoppingResults, productName) {
+    return shoppingResults.slice(0, 3).map((result, index) => ({
+      id: index + 1,
+      name: result.title || productName,
+      price: result.price || 'Price not available',
+      image: result.thumbnail || 'https://via.placeholder.com/200x200/4a7c59/ffffff?text=No+Image',
+      source: result.source || 'Unknown Store',
+      url: result.product_link || '#',
+      rating: result.rating ? result.rating.toString() : '4.0',
+      reviews: result.reviews || 0,
+      description: result.snippet || `Sustainable ${productName.toLowerCase()} option`,
+      features: this.extractFeatures(result.title, result.snippet),
+      shipping: result.delivery || 'Shipping info not available',
+      inStock: true, // Assume in stock if listed in shopping results
+      serpApiData: result // Keep original data for reference
+    }));
+  }
+
+  static getCountryCode(location) {
+    // Map common location names to country codes for Google Shopping API
+    const locationMap = {
+      'United States': 'us',
+      'Canada': 'ca',
+      'United Kingdom': 'uk',
+      'Germany': 'de',
+      'France': 'fr',
+      'Australia': 'au',
+      'Japan': 'jp',
+      'India': 'in',
+      'Brazil': 'br',
+      'Mexico': 'mx',
+      'Spain': 'es',
+      'Italy': 'it',
+      'Netherlands': 'nl',
+      'Sweden': 'se',
+      'Norway': 'no',
+      'Denmark': 'dk',
+      'Finland': 'fi'
+    };
+
+    // Return mapped country code or default to 'us'
+    return locationMap[location] || 'us';
+  }
+
+  static extractFeatures(title, snippet) {
+    const features = [];
+    const text = `${title || ''} ${snippet || ''}`.toLowerCase();
+
+    // Look for common sustainable/eco-friendly features
+    const featureKeywords = {
+      'Energy Efficient': ['energy efficient', 'energy star', 'low energy', 'efficient'],
+      'Eco-Friendly': ['eco-friendly', 'environmentally friendly', 'green', 'sustainable'],
+      'Organic': ['organic', 'natural', 'bio'],
+      'Recyclable': ['recyclable', 'recycle', 'recycled'],
+      'LED': ['led', 'led light'],
+      'Smart': ['smart', 'wifi', 'app control'],
+      'Long Lasting': ['durable', 'long lasting', 'lifetime'],
+      'Carbon Neutral': ['carbon neutral', 'carbon free', 'net zero']
+    };
+
+    Object.entries(featureKeywords).forEach(([feature, keywords]) => {
+      if (keywords.some(keyword => text.includes(keyword))) {
+        features.push(feature);
+      }
+    });
+
+    // Default features if none found
+    if (features.length === 0) {
+      features.push('Quality Product', 'Available Online');
+    }
+
+    return features.slice(0, 3); // Limit to 3 features
+  }
+
   static generateMockResults(keywords, productName) {
+    // Keep as fallback for when SerpApi fails
     const baseResults = [
       {
         id: 1,
@@ -98,7 +196,7 @@ export class ProductService {
   static getSearchUrls(keywords) {
     const keywordString = keywords.join(' ');
     const encodedKeywords = encodeURIComponent(keywordString);
-    
+
     return {
       amazon: `https://amazon.com/s?k=${encodedKeywords}`,
       ebay: `https://ebay.com/sch/i.html?_nkw=${encodedKeywords}`,
@@ -115,7 +213,7 @@ export class ProductService {
       'eBay': 'https://ebay.com/sch/i.html?_nkw=',
       'Local Store': 'https://maps.google.com/search/'
     };
-    
+
     const baseUrl = baseUrls[source] || 'https://google.com/search?q=';
     return baseUrl + encodeURIComponent(product.name);
   }

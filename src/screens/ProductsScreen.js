@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  Image, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
   ActivityIndicator,
   Linking,
   Alert
@@ -15,32 +15,35 @@ import { ProductService } from '../services/ProductService';
 export default function ProductsScreen({ route, navigation }) {
   const { products, analysis } = route.params;
   const [productListings, setProductListings] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [expandedProduct, setExpandedProduct] = useState(null);
+  const [loadingProducts, setLoadingProducts] = useState({});
+  const [fetchedProducts, setFetchedProducts] = useState({});
 
-  useEffect(() => {
-    fetchProductListings();
-  }, []);
-
-  const fetchProductListings = async () => {
-    setLoading(true);
-    const listings = {};
-    
-    for (const product of products) {
-      try {
-        const results = await ProductService.searchProducts(
-          product.searchKeywords, 
-          product.name
-        );
-        listings[product.name] = results;
-      } catch (error) {
-        console.error(`Error fetching listings for ${product.name}:`, error);
-        listings[product.name] = [];
-      }
+  const fetchProductListings = async (productName, product) => {
+    // Don't fetch if already fetched or currently loading
+    if (fetchedProducts[productName] || loadingProducts[productName]) {
+      return;
     }
-    
-    setProductListings(listings);
-    setLoading(false);
+
+    setLoadingProducts(prev => ({ ...prev, [productName]: true }));
+
+    try {
+      console.log(`Fetching listings for: ${productName}`);
+      const results = await ProductService.searchProducts(
+        product.searchKeywords,
+        product.name
+      );
+
+      setProductListings(prev => ({ ...prev, [productName]: results }));
+      setFetchedProducts(prev => ({ ...prev, [productName]: true }));
+    } catch (error) {
+      console.error(`Error fetching listings for ${productName}:`, error);
+      setProductListings(prev => ({ ...prev, [productName]: [] }));
+      setFetchedProducts(prev => ({ ...prev, [productName]: true }));
+    } finally {
+      setLoadingProducts(prev => ({ ...prev, [productName]: false }));
+    }
   };
 
   const openProductUrl = async (url) => {
@@ -56,19 +59,30 @@ export default function ProductsScreen({ route, navigation }) {
     }
   };
 
-  const toggleProductExpansion = (productName) => {
-    setExpandedProduct(expandedProduct === productName ? null : productName);
+  const toggleProductExpansion = async (productName, product) => {
+    if (expandedProduct === productName) {
+      // Collapse the product
+      setExpandedProduct(null);
+    } else {
+      // Expand the product and fetch listings if not already fetched
+      setExpandedProduct(productName);
+      if (!fetchedProducts[productName]) {
+        await fetchProductListings(productName, product);
+      }
+    }
   };
 
   const renderProduct = (product, index) => {
     const listings = productListings[product.name] || [];
     const isExpanded = expandedProduct === product.name;
+    const isLoadingThisProduct = loadingProducts[product.name];
+    const hasFetchedThisProduct = fetchedProducts[product.name];
 
     return (
       <View key={index} style={styles.productCard}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.productHeader}
-          onPress={() => toggleProductExpansion(product.name)}
+          onPress={() => toggleProductExpansion(product.name, product)}
         >
           <View style={styles.productInfo}>
             <Text style={styles.productName}>{product.name}</Text>
@@ -89,20 +103,20 @@ export default function ProductsScreen({ route, navigation }) {
               <Text style={styles.searchLinksTitle}>🔍 Quick Search Links:</Text>
               <View style={styles.searchLinks}>
                 {ProductService.getSearchUrls(product.searchKeywords).amazon && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.searchButton, styles.amazonButton]}
                     onPress={() => openProductUrl(ProductService.getSearchUrls(product.searchKeywords).amazon)}
                   >
                     <Text style={styles.searchButtonText}>Amazon</Text>
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.searchButton, styles.ebayButton]}
                   onPress={() => openProductUrl(ProductService.getSearchUrls(product.searchKeywords).ebay)}
                 >
                   <Text style={styles.searchButtonText}>eBay</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.searchButton, styles.googleButton]}
                   onPress={() => openProductUrl(ProductService.getSearchUrls(product.searchKeywords).google)}
                 >
@@ -111,12 +125,30 @@ export default function ProductsScreen({ route, navigation }) {
               </View>
             </View>
 
-            {loading ? (
-              <View style={styles.loadingListings}>
-                <ActivityIndicator size="small" color="#4a7c59" />
-                <Text style={styles.loadingText}>Finding products...</Text>
+            {!hasFetchedThisProduct ? (
+              <View style={styles.fetchPromptContainer}>
+                <TouchableOpacity
+                  style={styles.fetchButton}
+                  onPress={() => fetchProductListings(product.name, product)}
+                  disabled={isLoadingThisProduct}
+                >
+                  {isLoadingThisProduct ? (
+                    <>
+                      <ActivityIndicator size="small" color="#fff" />
+                      <Text style={styles.fetchButtonText}>Finding Products...</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.fetchButtonIcon}>🔍</Text>
+                      <Text style={styles.fetchButtonText}>Find Available Products</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+                <Text style={styles.fetchPromptText}>
+                  Tap to search for this product across multiple retailers
+                </Text>
               </View>
-            ) : (
+            ) : listings.length > 0 ? (
               <View style={styles.listingsContainer}>
                 <Text style={styles.listingsTitle}>🛒 Available Products:</Text>
                 {listings.map((listing, listingIndex) => (
@@ -125,21 +157,45 @@ export default function ProductsScreen({ route, navigation }) {
                     style={styles.listingCard}
                     onPress={() => openProductUrl(listing.url)}
                   >
-                    <Image source={{ uri: listing.image }} style={styles.listingImage} />
+                    <Image
+                      source={{ uri: listing.image }}
+                      style={styles.listingImage}
+                      onError={() => console.log('Image load error for:', listing.image)}
+                    />
                     <View style={styles.listingInfo}>
-                      <Text style={styles.listingName}>{listing.name}</Text>
+                      <Text style={styles.listingName} numberOfLines={2}>
+                        {listing.name}
+                      </Text>
                       <Text style={styles.listingPrice}>{listing.price}</Text>
                       <Text style={styles.listingSource}>📍 {listing.source}</Text>
                       <Text style={styles.listingRating}>
-                        ⭐ {listing.rating} ({listing.reviews} reviews)
+                        ⭐ {listing.rating} {listing.reviews > 0 && `(${listing.reviews} reviews)`}
                       </Text>
-                      <Text style={styles.listingShipping}>{listing.shipping}</Text>
+                      <Text style={styles.listingShipping} numberOfLines={1}>
+                        {listing.shipping}
+                      </Text>
+                      {listing.features && listing.features.length > 0 && (
+                        <View style={styles.listingFeatures}>
+                          {listing.features.slice(0, 2).map((feature, featureIndex) => (
+                            <Text key={featureIndex} style={styles.listingFeature}>
+                              {feature}
+                            </Text>
+                          ))}
+                        </View>
+                      )}
                       {!listing.inStock && (
                         <Text style={styles.outOfStock}>⚠️ Limited Stock</Text>
                       )}
                     </View>
                   </TouchableOpacity>
                 ))}
+              </View>
+            ) : (
+              <View style={styles.noListingsContainer}>
+                <Text style={styles.noListingsText}>No products found</Text>
+                <Text style={styles.noListingsSubtext}>
+                  Try the search links above to find this product manually
+                </Text>
               </View>
             )}
 
@@ -159,6 +215,8 @@ export default function ProductsScreen({ route, navigation }) {
     );
   };
 
+
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -171,9 +229,13 @@ export default function ProductsScreen({ route, navigation }) {
       {products.map((product, index) => renderProduct(product, index))}
 
       <View style={styles.footer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.visualizeButton}
-          onPress={() => navigation.navigate('Visualization', { analysis, products })}
+          onPress={() => navigation.navigate('Visualization', {
+            analysis,
+            photoUri: route.params.photoUri,
+            photoBase64: route.params.photoBase64
+          })}
         >
           <Text style={styles.visualizeButtonText}>🎨 Visualize Your Green Room</Text>
         </TouchableOpacity>
@@ -293,15 +355,45 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
-  loadingListings: {
+  fetchPromptContainer: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    marginVertical: 10,
+    borderWidth: 2,
+    borderColor: '#e8f5e8',
+    borderStyle: 'dashed',
+  },
+  fetchButton: {
+    backgroundColor: '#4a7c59',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  loadingText: {
-    marginLeft: 10,
+  fetchButtonIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  fetchButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 5,
+  },
+  fetchPromptText: {
+    fontSize: 12,
     color: '#5a7c50',
+    textAlign: 'center',
+    lineHeight: 16,
   },
   listingsContainer: {
     marginBottom: 15,
@@ -352,10 +444,44 @@ const styles = StyleSheet.create({
   listingShipping: {
     fontSize: 11,
     color: '#777',
+    marginTop: 2,
+  },
+  listingFeatures: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 4,
+    gap: 4,
+  },
+  listingFeature: {
+    fontSize: 10,
+    backgroundColor: '#e8f5e8',
+    color: '#2d5a27',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
   },
   outOfStock: {
     fontSize: 11,
     color: '#d32f2f',
+    marginTop: 2,
+  },
+  noListingsContainer: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    marginVertical: 10,
+  },
+  noListingsText: {
+    fontSize: 14,
+    color: '#5a7c50',
+    fontWeight: '600',
+  },
+  noListingsSubtext: {
+    fontSize: 12,
+    color: '#777',
+    textAlign: 'center',
+    marginTop: 4,
   },
   keywordsContainer: {
     marginTop: 10,
