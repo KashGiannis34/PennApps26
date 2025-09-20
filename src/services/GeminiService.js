@@ -1,75 +1,84 @@
-import axios from 'axios';
+import { GoogleGenAI, Type } from '@google/genai';
 import { GEMINI_API_KEY } from '@env';
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent';
+const ai = new GoogleGenAI({apiKey: GEMINI_API_KEY});
 
 export class GeminiService {
   static async analyzeRoomImage(base64Image) {
     try {
-      const payload = {
-        contents: [
-          {
-            parts: [
-              {
-                text: `Analyze this room image and suggest 5-7 specific sustainable, eco-friendly products that would make this room more environmentally friendly. For each product, provide:
+      const prompt = `Analyze this room image and suggest 5-7 specific sustainable, eco-friendly products that would make this room more environmentally friendly. For each product, provide:
 
-1. Product name and type
-2. Why it would benefit this specific room
-3. Environmental benefits
-4. Estimated price range
-5. Where to buy it (Amazon, eBay, local stores)
-6. Keywords for searching online
+      1. Product name and type
+      2. Why it would benefit this specific room
+      3. Environmental benefits
+      4. Estimated price range
+      5. Where to buy it (Amazon, eBay, local stores)
+      6. Keywords for searching online
 
-Focus on practical suggestions like:
-- LED light bulbs
-- Energy-efficient appliances
-- Sustainable furniture
-- Air purifying plants
-- Eco-friendly decor
-- Energy-saving devices
-- Sustainable storage solutions
+      Focus on practical suggestions like:
+      - LED light bulbs
+      - Energy-efficient appliances
+      - Sustainable furniture
+      - Air purifying plants
+      - Eco-friendly decor
+      - Energy-saving devices
+      - Sustainable storage solutions
 
-Format your response as a JSON object with this structure:
-{
-  "analysis": "Brief description of the room and current sustainability status",
-  "products": [
-    {
-      "name": "Product name",
-      "type": "Product category",
-      "reason": "Why this room needs this product",
-      "benefits": "Environmental benefits",
-      "priceRange": "$X - $Y",
-      "whereToFind": ["Amazon", "eBay", "Home Depot"],
-      "searchKeywords": ["keyword1", "keyword2", "keyword3"]
-    }
-  ],
-  "sustainabilityScore": 7,
-  "potentialSavings": "$XXX/year in energy costs"
-}`
+      Also, include a text follow up prompt that can be inputted into an AI ImageGen API to generate an image of a more sustainable room containing all of the products that were listed. This prompt will be fed into the image gen api along with an image of the room.
+      `;
+      const responseSchema = {
+        type: Type.OBJECT,
+        properties: {
+          analysis: { type: Type.STRING, description: "Brief description of the room and current sustainability status" },
+          products: {
+            type: Type.ARRAY,
+            description: "A list of suggested sustainable products.",
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING },
+                type: { type: Type.STRING },
+                reason: { type: Type.STRING },
+                benefits: { type: Type.STRING },
+                priceRange: { type: Type.STRING },
+                whereToFind: { type: Type.ARRAY, items: { type: Type.STRING } },
+                searchKeywords: { type: Type.ARRAY, items: { type: Type.STRING } },
               },
-              {
-                inline_data: {
-                  mime_type: "image/jpeg",
-                  data: base64Image
-                }
-              }
-            ]
-          }
-        ]
+              required: ["name", "type", "reason", "benefits"]
+            }
+          },
+          sustainabilityScore: { type: Type.NUMBER, description: "A score from 1-10 indicating the room's sustainability." },
+          potentialSavings: { type: Type.STRING, description: "Estimated potential savings per year." },
+          imageGenPrompt: { type: Type.STRING, description: "A prompt for an image generation model." },
+        },
+        required: ["analysis", "products", "imageGenPrompt"]
       };
 
-      const response = await axios.post(
-        `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-        payload,
+      const contents = [
         {
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          inlineData: {
+            mimeType: "image/jpeg",
+            data: base64Image
+          }
+        },
+        {
+          text: prompt
         }
-      );
+      ];
 
-      const textResponse = response.data.candidates[0].content.parts[0].text;
-      
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: contents,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema
+        }
+      });
+      console.log(response);
+      console.log(response.text);
+
+      const textResponse = response.text;
+
       // Extract JSON from the response
       const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -80,7 +89,7 @@ Format your response as a JSON object with this structure:
       }
     } catch (error) {
       console.error('Gemini API Error:', error);
-      
+
       // Return fallback data if API fails
       return this.getFallbackAnalysis();
     }
@@ -88,7 +97,7 @@ Format your response as a JSON object with this structure:
 
   static async generateRoomVisualization(roomDescription, products) {
     try {
-      const prompt = `Create a detailed description for an image that shows a ${roomDescription} enhanced with these sustainable products: ${products.map(p => p.name).join(', ')}. 
+      const prompt = `Create a detailed description for an image that shows a ${roomDescription} enhanced with these sustainable products: ${products.map(p => p.name).join(', ')}.
 
       Describe how the room would look with these eco-friendly additions, including:
       - Lighting improvements
@@ -111,12 +120,13 @@ Format your response as a JSON object with this structure:
         ]
       };
 
-      const response = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
-        payload
-      );
+      // const response = await axios.post(
+      //   `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+      //   payload
+      // );
 
-      return response.data.candidates[0].content.parts[0].text;
+      // return response.data.candidates[0].content.parts[0].text;
+      return 'placeholder';
     } catch (error) {
       console.error('Visualization generation error:', error);
       return "A beautifully transformed room with sustainable lighting, eco-friendly furniture, and lush green plants creating a healthy, environmentally conscious living space.";
