@@ -8,25 +8,57 @@ const router = express.Router();
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password, firstName, lastName } = req.body;
+    const errors = [];
 
     // Validate required fields
-    if (!username || !email || !password) {
+    if (!username || username.trim().length === 0) {
+      errors.push('Username is required');
+    } else if (username.length < 3) {
+      errors.push('Username must be at least 3 characters long');
+    } else if (username.length > 30) {
+      errors.push('Username cannot exceed 30 characters');
+    }
+
+    if (!email || email.trim().length === 0) {
+      errors.push('Email is required');
+    } else if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+      errors.push('Please enter a valid email address');
+    }
+
+    if (!password || password.length === 0) {
+      errors.push('Password is required');
+    } else if (password.length < 6) {
+      errors.push('Password must be at least 6 characters long');
+    }
+
+    if (firstName && firstName.length > 50) {
+      errors.push('First name cannot exceed 50 characters');
+    }
+
+    if (lastName && lastName.length > 50) {
+      errors.push('Last name cannot exceed 50 characters');
+    }
+
+    // Return validation errors if any
+    if (errors.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Username, email, and password are required'
+        message: 'Validation failed',
+        errors
       });
     }
 
     // Check if user already exists
     const existingUser = await User.findOne({
-      $or: [{ email }, { username }]
+      $or: [{ email: email.toLowerCase() }, { username }]
     });
 
     if (existingUser) {
-      const field = existingUser.email === email ? 'email' : 'username';
+      const field = existingUser.email === email.toLowerCase() ? 'email' : 'username';
       return res.status(400).json({
         success: false,
-        message: `User with this ${field} already exists`
+        message: `A user with this ${field} already exists`,
+        errors: [`A user with this ${field} already exists`]
       });
     }
 
@@ -61,8 +93,19 @@ router.post('/register', async (req, res) => {
       const errors = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({
         success: false,
-        message: 'Validation error',
+        message: 'Validation failed',
         errors
+      });
+    }
+
+    // Handle duplicate key errors (unique constraint violations)
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      const fieldName = field === 'email' ? 'email address' : field;
+      return res.status(400).json({
+        success: false,
+        message: `This ${fieldName} is already registered`,
+        errors: [`This ${fieldName} is already registered`]
       });
     }
 

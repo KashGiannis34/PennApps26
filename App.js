@@ -6,13 +6,14 @@ import CameraScreen from './src/screens/CameraScreen';
 import AnalysisScreen from './src/screens/AnalysisScreen';
 import ProductsScreen from './src/screens/ProductsScreen';
 import VisualizationScreen from './src/screens/VisualizationScreen';
+import WishlistScreen from './src/screens/WishlistScreen';
 
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator 
+      <Stack.Navigator
         initialRouteName="Home"
         screenOptions={{
           headerStyle: {
@@ -24,30 +25,35 @@ export default function App() {
           },
         }}
       >
-        <Stack.Screen 
-          name="Home" 
-          component={HomeScreen} 
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
           options={{ title: '🌱 Room Sustainability Analyzer' }}
         />
-        <Stack.Screen 
-          name="Camera" 
-          component={CameraScreen} 
+        <Stack.Screen
+          name="Camera"
+          component={CameraScreen}
           options={{ title: '📸 Capture Room' }}
         />
-        <Stack.Screen 
-          name="Analysis" 
-          component={AnalysisScreen} 
+        <Stack.Screen
+          name="Analysis"
+          component={AnalysisScreen}
           options={{ title: '🤖 AI Analysis' }}
         />
-        <Stack.Screen 
-          name="Products" 
-          component={ProductsScreen} 
+        <Stack.Screen
+          name="Products"
+          component={ProductsScreen}
           options={{ title: '🛒 Sustainable Products' }}
         />
-        <Stack.Screen 
-          name="Visualization" 
-          component={VisualizationScreen} 
+        <Stack.Screen
+          name="Visualization"
+          component={VisualizationScreen}
           options={{ title: '🎨 Room Visualization' }}
+        />
+        <Stack.Screen
+          name="Wishlist"
+          component={WishlistScreen}
+          options={{ title: '💚 My Wishlist' }}
         />
       </Stack.Navigator>
       <StatusBar style="light" />

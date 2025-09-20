@@ -46,7 +46,7 @@ export class ProductService {
 
   static formatShoppingResults(shoppingResults, productName) {
     return shoppingResults.slice(0, 3).map((result, index) => ({
-      id: index + 1,
+      id: result.product_id || `fallback_${index}_${Date.now()}`,
       name: result.title || productName,
       price: result.price || 'Price not available',
       image: result.thumbnail || 'https://via.placeholder.com/200x200/4a7c59/ffffff?text=No+Image',

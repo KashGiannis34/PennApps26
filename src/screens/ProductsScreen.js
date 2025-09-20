@@ -11,6 +11,8 @@ import {
   Alert
 } from 'react-native';
 import { ProductService } from '../services/ProductService';
+import { AuthService } from '../services/AuthService';
+import { WishlistService } from '../services/WishlistService';
 
 export default function ProductsScreen({ route, navigation }) {
   const { products, analysis } = route.params;
@@ -19,6 +21,71 @@ export default function ProductsScreen({ route, navigation }) {
   const [expandedProduct, setExpandedProduct] = useState(null);
   const [loadingProducts, setLoadingProducts] = useState({});
   const [fetchedProducts, setFetchedProducts] = useState({});
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [wishlistItems, setWishlistItems] = useState(new Set());
+  const [wishlistLoading, setWishlistLoading] = useState({});
+  const [currentAnalysisId, setCurrentAnalysisId] = useState(null);
+
+  // Helper function to get product ID from listing
+  const getProductId = (listing) => {
+    // Use the actual ID from the listing (from API result)
+    return listing.id?.toString() || `fallback_${Date.now()}_${Math.random()}`;
+  };
+
+  useEffect(() => {
+    checkAuthAndLoadWishlist();
+  }, []);
+
+  // Clear local state when new products are loaded (new image analysis)
+  useEffect(() => {
+    const analysisId = route.params.photoUri || route.params.photoBase64 || Date.now().toString();
+
+    if (currentAnalysisId && currentAnalysisId !== analysisId) {
+      // New analysis detected, clear the local product state but keep wishlist
+      console.log('New analysis detected, clearing local product state');
+      setWishlistLoading({});
+      setProductListings({});
+      setFetchedProducts({});
+      setExpandedProduct(null);
+
+      // Reload wishlist to ensure it's up to date
+      if (isAuthenticated) {
+        checkAuthAndLoadWishlist();
+      }
+    }
+
+    setCurrentAnalysisId(analysisId);
+  }, [products, route.params.photoUri, route.params.photoBase64]);
+
+  const checkAuthAndLoadWishlist = async () => {
+    try {
+      const authenticated = await AuthService.isAuthenticated();
+      setIsAuthenticated(authenticated);
+
+      if (authenticated) {
+        const wishlistResult = await WishlistService.getWishlist();
+        if (wishlistResult.success) {
+          // Create a set of product IDs that are in the wishlist
+          const wishlistProductIds = new Set();
+
+          wishlistResult.wishlist.items.forEach(item => {
+            // Add both the stored productId and the original listing ID
+            if (item.productId) {
+              wishlistProductIds.add(item.productId);
+            }
+            if (item.id) {
+              wishlistProductIds.add(item.id.toString());
+            }
+          });
+
+          console.log('Loaded wishlist IDs:', Array.from(wishlistProductIds));
+          setWishlistItems(wishlistProductIds);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking auth and loading wishlist:', error);
+    }
+  };
 
   const fetchProductListings = async (productName, product) => {
     // Don't fetch if already fetched or currently loading
@@ -72,14 +139,89 @@ export default function ProductsScreen({ route, navigation }) {
     }
   };
 
-  const renderProduct = (product, index) => {
+  const addToWishlist = async (listing) => {
+    if (!isAuthenticated) {
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in to add items to your wishlist',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => navigation.navigate('Home') }
+        ]
+      );
+      return;
+    }
+
+    // Use the productId that was passed in or get it from the listing
+    const productId = listing.productId || getProductId(listing);
+
+    if (wishlistItems.has(productId)) {
+      Alert.alert('Already in Wishlist', 'This item is already in your wishlist');
+      return;
+    }
+
+    setWishlistLoading(prev => ({ ...prev, [productId]: true }));
+
+    try {
+      const result = await WishlistService.addToWishlist({
+        ...listing,
+        id: productId,
+        productId: productId
+      });
+
+      if (result.success) {
+        setWishlistItems(prev => new Set([...prev, productId]));
+        Alert.alert('Success', 'Item added to your wishlist!');
+      } else {
+        Alert.alert('Error', result.error || 'Failed to add item to wishlist');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred');
+      console.error('Add to wishlist error:', error);
+    } finally {
+      setWishlistLoading(prev => ({ ...prev, [productId]: false }));
+    }
+  };
+
+  const removeFromWishlist = async (listing) => {
+    // Use the productId that was passed in
+    const productId = listing.productId || listing.id?.toString();
+
+    if (!productId || !wishlistItems.has(productId)) {
+      return;
+    }
+
+    setWishlistLoading(prev => ({ ...prev, [productId]: true }));
+
+    try {
+      const result = await WishlistService.removeFromWishlist(productId);
+
+      if (result.success) {
+        setWishlistItems(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(productId);
+          return newSet;
+        });
+        Alert.alert('Removed', 'Item removed from your wishlist');
+      } else {
+        Alert.alert('Error', result.error || 'Failed to remove item from wishlist');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred');
+      console.error('Remove from wishlist error:', error);
+    } finally {
+      setWishlistLoading(prev => ({ ...prev, [productId]: false }));
+    }
+  };
+
+  const renderProduct = (product, cardIndex) => {
     const listings = productListings[product.name] || [];
     const isExpanded = expandedProduct === product.name;
     const isLoadingThisProduct = loadingProducts[product.name];
     const hasFetchedThisProduct = fetchedProducts[product.name];
 
     return (
-      <View key={index} style={styles.productCard}>
+      <View key={cardIndex} style={styles.productCard}>
         <TouchableOpacity
           style={styles.productHeader}
           onPress={() => toggleProductExpansion(product.name, product)}
@@ -151,44 +293,74 @@ export default function ProductsScreen({ route, navigation }) {
             ) : listings.length > 0 ? (
               <View style={styles.listingsContainer}>
                 <Text style={styles.listingsTitle}>🛒 Available Products:</Text>
-                {listings.map((listing, listingIndex) => (
-                  <TouchableOpacity
-                    key={listingIndex}
-                    style={styles.listingCard}
-                    onPress={() => openProductUrl(listing.url)}
-                  >
-                    <Image
-                      source={{ uri: listing.image }}
-                      style={styles.listingImage}
-                      onError={() => console.log('Image load error for:', listing.image)}
-                    />
-                    <View style={styles.listingInfo}>
-                      <Text style={styles.listingName} numberOfLines={2}>
-                        {listing.name}
-                      </Text>
-                      <Text style={styles.listingPrice}>{listing.price}</Text>
-                      <Text style={styles.listingSource}>📍 {listing.source}</Text>
-                      <Text style={styles.listingRating}>
-                        ⭐ {listing.rating} {listing.reviews > 0 && `(${listing.reviews} reviews)`}
-                      </Text>
-                      <Text style={styles.listingShipping} numberOfLines={1}>
-                        {listing.shipping}
-                      </Text>
-                      {listing.features && listing.features.length > 0 && (
-                        <View style={styles.listingFeatures}>
-                          {listing.features.slice(0, 2).map((feature, featureIndex) => (
-                            <Text key={featureIndex} style={styles.listingFeature}>
-                              {feature}
-                            </Text>
-                          ))}
+                {listings.map((listing, listingIndex) => {
+                  // Use the actual product ID from the listing
+                  const productId = getProductId(listing);
+                  console.log('Using product ID:', productId, 'for listing:', listing.name);
+                  const isInWishlist = wishlistItems.has(productId);
+                  const isWishlistLoading = wishlistLoading[productId];
+
+                  return (
+                    <View key={listingIndex} style={styles.listingCardContainer}>
+                      <TouchableOpacity
+                        style={styles.listingCard}
+                        onPress={() => openProductUrl(listing.url)}
+                      >
+                        <Image
+                          source={{ uri: listing.image }}
+                          style={styles.listingImage}
+                          onError={() => console.log('Image load error for:', listing.image)}
+                        />
+                        <View style={styles.listingInfo}>
+                          <Text style={styles.listingName} numberOfLines={2}>
+                            {listing.name}
+                          </Text>
+                          <Text style={styles.listingPrice}>{listing.price}</Text>
+                          <Text style={styles.listingSource}>📍 {listing.source}</Text>
+                          <Text style={styles.listingRating}>
+                            ⭐ {listing.rating} {listing.reviews > 0 && `(${listing.reviews} reviews)`}
+                          </Text>
+                          <Text style={styles.listingShipping} numberOfLines={1}>
+                            {listing.shipping}
+                          </Text>
+                          {listing.features && listing.features.length > 0 && (
+                            <View style={styles.listingFeatures}>
+                              {listing.features.slice(0, 2).map((feature, featureIndex) => (
+                                <Text key={featureIndex} style={styles.listingFeature}>
+                                  {feature}
+                                </Text>
+                              ))}
+                            </View>
+                          )}
+                          {!listing.inStock && (
+                            <Text style={styles.outOfStock}>⚠️ Limited Stock</Text>
+                          )}
                         </View>
-                      )}
-                      {!listing.inStock && (
-                        <Text style={styles.outOfStock}>⚠️ Limited Stock</Text>
-                      )}
+                      </TouchableOpacity>
+
+                      {/* Wishlist Button */}
+                      <TouchableOpacity
+                        style={[
+                          styles.wishlistButton,
+                          isInWishlist ? styles.wishlistButtonActive : styles.wishlistButtonInactive
+                        ]}
+                        onPress={() => isInWishlist ?
+                          removeFromWishlist({ ...listing, id: productId, productId: productId }) :
+                          addToWishlist({ ...listing, id: productId, productId: productId })
+                        }
+                        disabled={isWishlistLoading}
+                      >
+                        {isWishlistLoading ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <Text style={styles.wishlistButtonText}>
+                            {isInWishlist ? '💚' : '🤍'}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
                     </View>
-                  </TouchableOpacity>
-                ))}
+                  );
+                })}
               </View>
             ) : (
               <View style={styles.noListingsContainer}>
@@ -224,9 +396,17 @@ export default function ProductsScreen({ route, navigation }) {
         <Text style={styles.subtitle}>
           {products.length} eco-friendly recommendations • {analysis.potentialSavings}
         </Text>
+        {isAuthenticated && (
+          <TouchableOpacity
+            style={styles.wishlistNavButton}
+            onPress={() => navigation.navigate('Wishlist')}
+          >
+            <Text style={styles.wishlistNavButtonText}>💚 My Wishlist</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {products.map((product, index) => renderProduct(product, index))}
+      {products.map((product, cardIndex) => renderProduct(product, cardIndex))}
 
       <View style={styles.footer}>
         <TouchableOpacity
@@ -266,6 +446,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#5a7c50',
     textAlign: 'center',
+    marginBottom: 15,
+  },
+  wishlistNavButton: {
+    backgroundColor: '#4a7c59',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  wishlistNavButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   productCard: {
     backgroundColor: '#fff',
@@ -404,14 +598,18 @@ const styles = StyleSheet.create({
     color: '#2d5a27',
     marginBottom: 10,
   },
+  listingCardContainer: {
+    position: 'relative',
+    marginBottom: 8,
+  },
   listingCard: {
     flexDirection: 'row',
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
     padding: 10,
-    marginBottom: 8,
     borderWidth: 1,
     borderColor: '#e0e0e0',
+    paddingRight: 50, // Make room for wishlist button
   },
   listingImage: {
     width: 60,
@@ -518,5 +716,30 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  // Wishlist styles
+  wishlistButton: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  wishlistButtonActive: {
+    backgroundColor: '#4a7c59',
+  },
+  wishlistButtonInactive: {
+    backgroundColor: '#ccc',
+  },
+  wishlistButtonText: {
+    fontSize: 18,
   },
 });
