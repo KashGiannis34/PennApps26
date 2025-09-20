@@ -75,4 +75,4 @@ Update the CORS origins in `server.js` if you need to add other URLs.
 1. **Server won't start**: Check if port 3001 is available
 2. **API calls fail**: Verify SERPAPI_KEY is set correctly
 3. **CORS errors**: Add your Expo dev server URL to the CORS origins
-4. **No results**: Check server logs for SerpApi errors
+4. **No results**: Check server logs for SerpApi error
