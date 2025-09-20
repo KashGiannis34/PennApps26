@@ -13,23 +13,39 @@ import { GeminiService } from '../services/GeminiService';
 
 export default function VisualizationScreen({ route, navigation }) {
   const { analysis, photoUri, photoBase64 } = route.params;
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState(null);
-  const [visualizationText, setVisualizationText] = useState('');
+  const [availableProducts, setAvailableProducts] = useState(analysis?.products || []);
+  const [selectedProducts, setSelectedProducts] = useState([]);
 
-  useEffect(() => {
-    generateVisualization();
-  }, []);
+  const addProductToSelection = (product) => {
+    if (!selectedProducts.find(p => p.name === product.name)) {
+      setSelectedProducts([...selectedProducts, product]);
+      setAvailableProducts(availableProducts.filter(p => p.name !== product.name));
+    }
+  };
+
+  const removeProductFromSelection = (product) => {
+    setSelectedProducts(selectedProducts.filter(p => p.name !== product.name));
+    setAvailableProducts([...availableProducts, product]);
+  };
 
   const generateVisualization = async () => {
+    if (selectedProducts.length === 0) {
+      Alert.alert(
+        'No Products Selected',
+        'Please select at least one product to add to your room visualization.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     try {
       setLoading(true);
-
-      // Generate visualization using Gemini
-      const products = analysis?.products || [];
+      setGeneratedImageUrl(null);
 
       const result = await GeminiService.generateRoomVisualization(
-        products,
+        selectedProducts,
         photoBase64
       );
 
@@ -37,11 +53,13 @@ export default function VisualizationScreen({ route, navigation }) {
         // Convert base64 to data URI for display
         const imageUri = `data:${result.mimeType};base64,${result.data}`;
         setGeneratedImageUrl(imageUri);
-        setVisualizationText("Your room has been transformed with sustainable improvements! The visualization shows how your space could look with eco-friendly products that reduce energy consumption, improve air quality, and create a healthier living environment.");
       } else {
         console.warn('No image generated:', result.error);
-        setGeneratedImageUrl(null);
-        setVisualizationText("We weren't able to generate a visual transformation this time, but the suggested products below will help make your room more sustainable and eco-friendly.");
+        Alert.alert(
+          'Generation Failed',
+          'We couldn\'t generate your room visualization. Please try again.',
+          [{ text: 'OK' }]
+        );
       }
 
       setLoading(false);
@@ -49,7 +67,11 @@ export default function VisualizationScreen({ route, navigation }) {
     } catch (error) {
       console.error('Visualization generation error:', error);
       setLoading(false);
-      setGeneratedImageUrl(null);
+      Alert.alert(
+        'Error',
+        'An error occurred while generating your visualization. Please try again.',
+        [{ text: 'OK' }]
+      );
     }
   };
 
@@ -72,9 +94,9 @@ export default function VisualizationScreen({ route, navigation }) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>🎨 Your Sustainable Room Vision</Text>
+        <Text style={styles.title}>🎨 Customize Your Sustainable Room</Text>
         <Text style={styles.subtitle}>
-          See how your space could look with eco-friendly improvements
+          Select products to add to your room visualization
         </Text>
       </View>
 
@@ -89,7 +111,7 @@ export default function VisualizationScreen({ route, navigation }) {
             <ActivityIndicator size="large" color="#4a7c59" />
             <Text style={styles.loadingText}>🎨 Creating your sustainable vision...</Text>
             <Text style={styles.loadingSubtext}>
-              Generating visualization with eco-friendly improvements
+              Generating visualization with selected products
             </Text>
           </View>
         ) : generatedImageUrl ? (
@@ -102,58 +124,82 @@ export default function VisualizationScreen({ route, navigation }) {
             <Text style={styles.imageLabel}>🌱 Your Sustainable Vision</Text>
             <View style={styles.fallbackContainer}>
               <Text style={styles.fallbackText}>🎨</Text>
-              <Text style={styles.fallbackTitle}>Visualization Coming Soon</Text>
+              <Text style={styles.fallbackTitle}>Select Products Below</Text>
               <Text style={styles.fallbackSubtext}>
-                Check out the recommended products below to start making your room more sustainable!
+                Choose products to add to your room, then tap "Generate Visualization"
               </Text>
             </View>
           </View>
         )}
       </View>
 
-      <View style={styles.descriptionContainer}>
-        <Text style={styles.descriptionTitle}>✨ Your Transformation</Text>
-        <Text style={styles.descriptionText}>{visualizationText}</Text>
+      {/* Selected Products Section */}
+      <View style={styles.selectedSection}>
+        <Text style={styles.sectionTitle}>
+          🌟 Selected Products ({selectedProducts.length})
+        </Text>
+        {selectedProducts.length > 0 ? (
+          selectedProducts.map((product, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.selectedProductCard}
+              onPress={() => removeProductFromSelection(product)}
+            >
+              <View style={styles.productInfo}>
+                <Text style={styles.productName}>{product.name}</Text>
+                <Text style={styles.productPrice}>{product.priceRange}</Text>
+                <Text style={styles.productReason}>{product.reason}</Text>
+              </View>
+              <Text style={styles.removeButton}>✕</Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={styles.emptySelection}>
+            <Text style={styles.emptyText}>No products selected yet</Text>
+            <Text style={styles.emptySubtext}>Tap products below to add them</Text>
+          </View>
+        )}
       </View>
 
-      {analysis && (
-        <View style={styles.impactContainer}>
-          <Text style={styles.impactTitle}>🌍 Environmental Impact</Text>
-
-          <View style={styles.impactCard}>
-            <Text style={styles.impactValue}>{analysis.sustainabilityScore}/10</Text>
-            <Text style={styles.impactLabel}>Sustainability Score</Text>
-          </View>
-
-          <View style={styles.benefitsList}>
-            <Text style={styles.benefitsTitle}>Expected Benefits:</Text>
-            <Text style={styles.benefitItem}>💰 {analysis.potentialSavings}</Text>
-            <Text style={styles.benefitItem}>🔋 Reduced energy consumption</Text>
-            <Text style={styles.benefitItem}>🌱 Improved air quality</Text>
-            <Text style={styles.benefitItem}>♻️ Lower environmental footprint</Text>
-            <Text style={styles.benefitItem}>🏡 Healthier living space</Text>
-          </View>
+      {/* Generate Button */}
+      {selectedProducts.length > 0 && (
+        <View style={styles.generateSection}>
+          <TouchableOpacity
+            style={styles.generateButton}
+            onPress={generateVisualization}
+            disabled={loading}
+          >
+            <Text style={styles.generateButtonText}>
+              {loading ? 'Generating...' : '🎨 Generate Visualization'}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 
-      <View style={styles.recommendedProducts}>
-        <Text style={styles.recommendedTitle}>🛒 Key Sustainable Products</Text>
-        {(analysis?.products || []).slice(0, 3).map((product, index) => (
-          <View key={index} style={styles.productSummary}>
-            <Text style={styles.productSummaryName}>{product.name}</Text>
-            <Text style={styles.productSummaryBenefit}>{product.benefits}</Text>
-            <Text style={styles.productSummaryPrice}>{product.priceRange}</Text>
-          </View>
+      {/* Available Products Section */}
+      <View style={styles.availableSection}>
+        <Text style={styles.sectionTitle}>
+          🛒 Available Products ({availableProducts.length})
+        </Text>
+        {availableProducts.map((product, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.availableProductCard}
+            onPress={() => addProductToSelection(product)}
+          >
+            <View style={styles.productInfo}>
+              <Text style={styles.productName}>{product.name}</Text>
+              <Text style={styles.productPrice}>{product.priceRange}</Text>
+              <Text style={styles.productReason}>{product.reason}</Text>
+            </View>
+            <Text style={styles.addButton}>+</Text>
+          </TouchableOpacity>
         ))}
       </View>
 
       <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.primaryButton} onPress={shareVisualization}>
-          <Text style={styles.primaryButtonText}>📱 Share Your Vision</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.secondaryButton} onPress={viewProductsAgain}>
-          <Text style={styles.secondaryButtonText}>🛒 View Products Again</Text>
+          <Text style={styles.secondaryButtonText}>🛒 View All Product Details</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.tertiaryButton} onPress={startOver}>
@@ -256,122 +302,124 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 20,
   },
-  descriptionContainer: {
-    backgroundColor: '#fff',
+  selectedSection: {
     margin: 20,
-    padding: 20,
-    borderRadius: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginTop: 0,
   },
-  descriptionTitle: {
+  availableSection: {
+    margin: 20,
+  },
+  sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#2d5a27',
-    marginBottom: 10,
+    marginBottom: 15,
   },
-  descriptionText: {
-    fontSize: 14,
-    color: '#5a7c50',
-    lineHeight: 20,
-  },
-  impactContainer: {
+  selectedProductCard: {
     backgroundColor: '#e8f5e8',
-    margin: 20,
-    padding: 20,
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: '#4a7c59',
-  },
-  impactTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2d5a27',
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  impactCard: {
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  impactValue: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#4a7c59',
-  },
-  impactLabel: {
-    fontSize: 14,
-    color: '#2d5a27',
-  },
-  benefitsList: {
-    marginTop: 10,
-  },
-  benefitsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2d5a27',
-    marginBottom: 8,
-  },
-  benefitItem: {
-    fontSize: 14,
-    color: '#5a7c50',
-    marginBottom: 4,
-  },
-  recommendedProducts: {
-    margin: 20,
-  },
-  recommendedTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2d5a27',
-    marginBottom: 15,
-  },
-  productSummary: {
-    backgroundColor: '#fff',
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: '#4a7c59',
+    borderWidth: 2,
+    borderColor: '#4a7c59',
+    flexDirection: 'row',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },
-  productSummaryName: {
+  availableProductCard: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#d0e7d0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  productInfo: {
+    flex: 1,
+  },
+  productName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2d5a27',
+    marginBottom: 3,
   },
-  productSummaryBenefit: {
-    fontSize: 12,
-    color: '#5a7c50',
-    marginVertical: 2,
-  },
-  productSummaryPrice: {
+  productPrice: {
     fontSize: 14,
     color: '#4a7c59',
     fontWeight: '600',
+    marginBottom: 5,
   },
+  productReason: {
+    fontSize: 12,
+    color: '#5a7c50',
+  },
+  addButton: {
+    fontSize: 24,
+    color: '#4a7c59',
+    fontWeight: 'bold',
+    paddingHorizontal: 10,
+  },
+  removeButton: {
+    fontSize: 20,
+    color: '#d32f2f',
+    fontWeight: 'bold',
+    paddingHorizontal: 10,
+  },
+  emptySelection: {
+    backgroundColor: '#f9f9f9',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: '#d0e7d0',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#5a7c50',
+    fontWeight: '600',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#8a8a8a',
+    marginTop: 5,
+  },
+  generateSection: {
+    margin: 20,
+    marginTop: 0,
+  },
+  generateButton: {
+    backgroundColor: '#4a7c59',
+    paddingVertical: 18,
+    borderRadius: 25,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  generateButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+
   actionButtons: {
     padding: 20,
     gap: 15,
     paddingBottom: 40,
-  },
-  primaryButton: {
-    backgroundColor: '#4a7c59',
-    paddingVertical: 15,
-    borderRadius: 25,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   secondaryButton: {
     backgroundColor: '#fff',

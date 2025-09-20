@@ -25,9 +25,9 @@ export default function CameraScreen({ navigation }) {
           quality: 0.8,
           base64: true,
         });
-        
+
         // Navigate to analysis screen with photo data
-        navigation.navigate('Analysis', { 
+        navigation.navigate('Analysis', {
           photoUri: photo.uri,
           photoBase64: photo.base64,
         });
@@ -40,7 +40,7 @@ export default function CameraScreen({ navigation }) {
 
   const pickFromGallery = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaType.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,
@@ -86,38 +86,38 @@ export default function CameraScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <CameraView 
-        style={styles.camera} 
+      <CameraView
+        style={styles.camera}
         facing={facing}
         ref={cameraRef}
         onCameraReady={() => setIsReady(true)}
-      >
-        <View style={styles.overlay}>
-          <View style={styles.topControls}>
-            <Text style={styles.instructionText}>
-              📸 Point camera at your room and tap to capture
-            </Text>
-          </View>
+      />
 
-          <View style={styles.bottomControls}>
-            <TouchableOpacity style={styles.galleryButton} onPress={pickFromGallery}>
-              <Text style={styles.controlButtonText}>📁</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.captureButton} 
-              onPress={takePicture}
-              disabled={!isReady}
-            >
-              <View style={styles.captureButtonInner} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
-              <Text style={styles.controlButtonText}>🔄</Text>
-            </TouchableOpacity>
-          </View>
+      <View style={styles.overlay}>
+        <View style={styles.topControls}>
+          <Text style={styles.instructionText}>
+            📸 Point camera at your room and tap to capture
+          </Text>
         </View>
-      </CameraView>
+
+        <View style={styles.bottomControls}>
+          <TouchableOpacity style={styles.galleryButton} onPress={pickFromGallery}>
+            <Text style={styles.controlButtonText}>📁</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.captureButton}
+            onPress={takePicture}
+            disabled={!isReady}
+          >
+            <View style={styles.captureButtonInner} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
+            <Text style={styles.controlButtonText}>🔄</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
@@ -131,7 +131,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   overlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'transparent',
     justifyContent: 'space-between',
   },
