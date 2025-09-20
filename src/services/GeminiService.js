@@ -23,8 +23,6 @@ export class GeminiService {
       - Eco-friendly decor
       - Energy-saving devices
       - Sustainable storage solutions
-
-      Also, include a text follow up prompt that can be inputted into an AI ImageGen API to generate an image of a more sustainable room containing all of the products that were listed. This prompt will be fed into the image gen api along with an image of the room.
       `;
       const responseSchema = {
         type: Type.OBJECT,
@@ -49,9 +47,8 @@ export class GeminiService {
           },
           sustainabilityScore: { type: Type.NUMBER, description: "A score from 1-10 indicating the room's sustainability." },
           potentialSavings: { type: Type.STRING, description: "Estimated potential savings per year." },
-          imageGenPrompt: { type: Type.STRING, description: "A prompt for an image generation model." },
         },
-        required: ["analysis", "products", "imageGenPrompt"]
+        required: ["analysis", "products"]
       };
 
       const contents = [
@@ -74,8 +71,6 @@ export class GeminiService {
           responseSchema: responseSchema
         }
       });
-      console.log(response);
-      console.log(response.text);
 
       const textResponse = response.text;
 
@@ -95,41 +90,67 @@ export class GeminiService {
     }
   }
 
-  static async generateRoomVisualization(roomDescription, products) {
+  static async generateRoomVisualization(products, base64Image) {
     try {
-      const prompt = `Create a detailed description for an image that shows a ${roomDescription} enhanced with these sustainable products: ${products.map(p => p.name).join(', ')}.
+      // Create a detailed prompt based on the recommended products
+      const productDescriptions = products.map(product =>
+        `- ${product.name} (${product.type}): ${product.reason}`
+      ).join('\n');
 
-      Describe how the room would look with these eco-friendly additions, including:
-      - Lighting improvements
-      - New sustainable furniture/decor
-      - Plants and greenery
-      - Energy-efficient appliances
-      - Overall aesthetic improvements
+      const promptText = `Transform this room to be more sustainable and eco-friendly by adding the following recommended products while maintaining the room's existing layout, style, and character:
 
-      Keep the description realistic and achievable.`;
+      ${productDescriptions}
 
-      const payload = {
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt
-              }
-            ]
+      Please generate a photorealistic image showing this same room but with these sustainable improvements integrated naturally into the space. The products should be placed logically where they would naturally belong in this type of room. Maintain the same lighting, perspective, and overall aesthetic while making the space visibly more sustainable and environmentally friendly. The image should look like a realistic "after" photo of the room's sustainable transformation.`;
+
+      const prompt = [
+        { text: promptText},
+        {
+          inlineData: {
+            mimeType: "image/png",
+            data: base64Image,
+          },
+        },
+      ];
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash-image-preview",
+        contents: prompt,
+      });
+
+      // Check if response contains image data
+      if (response && response.candidates && response.candidates[0]) {
+        const candidate = response.candidates[0];
+
+        // Look for image data in the response
+        if (candidate.content && candidate.content.parts) {
+          for (const part of candidate.content.parts) {
+            if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
+              const imageData = part.inlineData.data;
+
+              // Return base64 data (React Native compatible)
+              return {
+                success: true,
+                data: imageData,
+                mimeType: part.inlineData.mimeType
+              };
+            }
           }
-        ]
+        }
+      }
+
+      // If no image found in response, return error
+      return {
+        success: false,
+        error: 'No image data found in response'
       };
 
-      // const response = await axios.post(
-      //   `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
-      //   payload
-      // );
-
-      // return response.data.candidates[0].content.parts[0].text;
-      return 'placeholder';
     } catch (error) {
       console.error('Visualization generation error:', error);
-      return "A beautifully transformed room with sustainable lighting, eco-friendly furniture, and lush green plants creating a healthy, environmentally conscious living space.";
+      return {
+        success: false,
+        error: error.message
+      };
     }
   }
 

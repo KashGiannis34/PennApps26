@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  Image, 
-  ActivityIndicator, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  ActivityIndicator,
   TouchableOpacity,
-  Alert 
+  Alert
 } from 'react-native';
 import { GeminiService } from '../services/GeminiService';
 
 export default function VisualizationScreen({ route, navigation }) {
-  const { analysis, photoUri, products } = route.params;
-  const [visualizationText, setVisualizationText] = useState('');
+  const { analysis, photoUri, photoBase64 } = route.params;
   const [loading, setLoading] = useState(true);
   const [generatedImageUrl, setGeneratedImageUrl] = useState(null);
+  const [visualizationText, setVisualizationText] = useState('');
 
   useEffect(() => {
     generateVisualization();
@@ -24,30 +24,32 @@ export default function VisualizationScreen({ route, navigation }) {
   const generateVisualization = async () => {
     try {
       setLoading(true);
-      
-      // Generate description using Gemini
-      const roomDescription = analysis?.analysis || "modern room";
-      const productList = products || analysis?.products || [];
-      
-      const description = await GeminiService.generateRoomVisualization(
-        roomDescription, 
-        productList
+
+      // Generate visualization using Gemini
+      const products = analysis?.products || [];
+
+      const result = await GeminiService.generateRoomVisualization(
+        products,
+        photoBase64
       );
-      
-      setVisualizationText(description);
-      
-      // Simulate image generation (in a real app, you'd use an image generation API)
-      // For now, we'll use a placeholder with the room improvements
-      setTimeout(() => {
-        setGeneratedImageUrl('https://via.placeholder.com/400x300/4a7c59/ffffff?text=Your+Sustainable+Room+Visualization');
-        setLoading(false);
-      }, 2000);
-      
+
+      if (result.success && result.data) {
+        // Convert base64 to data URI for display
+        const imageUri = `data:${result.mimeType};base64,${result.data}`;
+        setGeneratedImageUrl(imageUri);
+        setVisualizationText("Your room has been transformed with sustainable improvements! The visualization shows how your space could look with eco-friendly products that reduce energy consumption, improve air quality, and create a healthier living environment.");
+      } else {
+        console.warn('No image generated:', result.error);
+        setGeneratedImageUrl(null);
+        setVisualizationText("We weren't able to generate a visual transformation this time, but the suggested products below will help make your room more sustainable and eco-friendly.");
+      }
+
+      setLoading(false);
+
     } catch (error) {
       console.error('Visualization generation error:', error);
-      setVisualizationText('Your room would be beautifully transformed with sustainable lighting, eco-friendly furniture, and lush green plants creating a healthy, environmentally conscious living space.');
-      setGeneratedImageUrl('https://via.placeholder.com/400x300/4a7c59/ffffff?text=Eco-Friendly+Room+Concept');
       setLoading(false);
+      setGeneratedImageUrl(null);
     }
   };
 
@@ -90,10 +92,21 @@ export default function VisualizationScreen({ route, navigation }) {
               Generating visualization with eco-friendly improvements
             </Text>
           </View>
-        ) : (
+        ) : generatedImageUrl ? (
           <View style={styles.imageSection}>
             <Text style={styles.imageLabel}>🌱 Your Sustainable Vision</Text>
             <Image source={{ uri: generatedImageUrl }} style={styles.roomImage} />
+          </View>
+        ) : (
+          <View style={styles.fallbackSection}>
+            <Text style={styles.imageLabel}>🌱 Your Sustainable Vision</Text>
+            <View style={styles.fallbackContainer}>
+              <Text style={styles.fallbackText}>🎨</Text>
+              <Text style={styles.fallbackTitle}>Visualization Coming Soon</Text>
+              <Text style={styles.fallbackSubtext}>
+                Check out the recommended products below to start making your room more sustainable!
+              </Text>
+            </View>
           </View>
         )}
       </View>
@@ -106,7 +119,7 @@ export default function VisualizationScreen({ route, navigation }) {
       {analysis && (
         <View style={styles.impactContainer}>
           <Text style={styles.impactTitle}>🌍 Environmental Impact</Text>
-          
+
           <View style={styles.impactCard}>
             <Text style={styles.impactValue}>{analysis.sustainabilityScore}/10</Text>
             <Text style={styles.impactLabel}>Sustainability Score</Text>
@@ -125,7 +138,7 @@ export default function VisualizationScreen({ route, navigation }) {
 
       <View style={styles.recommendedProducts}>
         <Text style={styles.recommendedTitle}>🛒 Key Sustainable Products</Text>
-        {(products || analysis?.products || []).slice(0, 3).map((product, index) => (
+        {(analysis?.products || []).slice(0, 3).map((product, index) => (
           <View key={index} style={styles.productSummary}>
             <Text style={styles.productSummaryName}>{product.name}</Text>
             <Text style={styles.productSummaryBenefit}>{product.benefits}</Text>
@@ -213,6 +226,35 @@ const styles = StyleSheet.create({
     color: '#5a7c50',
     textAlign: 'center',
     marginTop: 5,
+  },
+  fallbackSection: {
+    marginBottom: 20,
+  },
+  fallbackContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 200,
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#d0e7d0',
+    borderStyle: 'dashed',
+  },
+  fallbackText: {
+    fontSize: 48,
+    marginBottom: 10,
+  },
+  fallbackTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2d5a27',
+    marginBottom: 5,
+  },
+  fallbackSubtext: {
+    fontSize: 14,
+    color: '#5a7c50',
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   descriptionContainer: {
     backgroundColor: '#fff',

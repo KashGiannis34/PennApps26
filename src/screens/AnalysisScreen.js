@@ -16,7 +16,7 @@ export default function AnalysisScreen({ route, navigation }) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const result = await GeminiService.analyzeRoomImage(photoBase64);
       setAnalysis(result);
     } catch (err) {
@@ -28,7 +28,7 @@ export default function AnalysisScreen({ route, navigation }) {
   };
 
   const viewProducts = () => {
-    navigation.navigate('Products', { 
+    navigation.navigate('Products', {
       products: analysis.products,
       analysis: analysis
     });
@@ -37,7 +37,8 @@ export default function AnalysisScreen({ route, navigation }) {
   const createVisualization = () => {
     navigation.navigate('Visualization', {
       analysis: analysis,
-      photoUri: photoUri
+      photoUri: photoUri,
+      photoBase64: photoBase64
     });
   };
 
@@ -68,7 +69,7 @@ export default function AnalysisScreen({ route, navigation }) {
   return (
     <ScrollView style={styles.container}>
       <Image source={{ uri: photoUri }} style={styles.roomImage} />
-      
+
       <View style={styles.analysisContainer}>
         <View style={styles.scoreCard}>
           <Text style={styles.scoreTitle}>Sustainability Score</Text>
@@ -85,17 +86,15 @@ export default function AnalysisScreen({ route, navigation }) {
           <Text style={styles.productsTitle}>
             🌱 {analysis.products.length} Sustainable Products Found
           </Text>
-          
+
           {analysis.products.slice(0, 3).map((product, index) => (
             <View key={index} style={styles.productPreviewCard}>
-              <View style={styles.productHeader}>
-                <Text style={styles.productName}>{product.name}</Text>
-                <Text style={styles.productPrice}>{product.priceRange}</Text>
-              </View>
+              <Text style={styles.productName}>{product.name}</Text>
+              <Text style={styles.productPrice}>{product.priceRange}</Text>
               <Text style={styles.productReason}>{product.reason}</Text>
             </View>
           ))}
-          
+
           {analysis.products.length > 3 && (
             <Text style={styles.moreProductsText}>
               +{analysis.products.length - 3} more products available
@@ -250,22 +249,17 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  productHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
   productName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2d5a27',
-    flex: 1,
+    marginBottom: 3,
   },
   productPrice: {
     fontSize: 14,
     color: '#4a7c59',
     fontWeight: '600',
+    marginBottom: 5,
   },
   productReason: {
     fontSize: 12,
