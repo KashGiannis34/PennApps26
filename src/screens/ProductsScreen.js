@@ -13,6 +13,7 @@ import {
 import { ProductService } from '../services/ProductService';
 import { AuthService } from '../services/AuthService';
 import { WishlistService } from '../services/WishlistService';
+import ImageViewer from '../components/ImageViewer';
 
 export default function ProductsScreen({ route, navigation }) {
   const { products, analysis } = route.params;
@@ -25,6 +26,9 @@ export default function ProductsScreen({ route, navigation }) {
   const [wishlistItems, setWishlistItems] = useState(new Set());
   const [wishlistLoading, setWishlistLoading] = useState({});
   const [currentAnalysisId, setCurrentAnalysisId] = useState(null);
+  const [imageViewerVisible, setImageViewerVisible] = useState(false);
+  const [currentImageUri, setCurrentImageUri] = useState(null);
+  const [currentImageTitle, setCurrentImageTitle] = useState(null);
 
   // Helper function to get product ID from listing
   const getProductId = (listing) => {
@@ -42,7 +46,6 @@ export default function ProductsScreen({ route, navigation }) {
 
     if (currentAnalysisId && currentAnalysisId !== analysisId) {
       // New analysis detected, clear the local product state but keep wishlist
-      console.log('New analysis detected, clearing local product state');
       setWishlistLoading({});
       setProductListings({});
       setFetchedProducts({});
@@ -78,7 +81,6 @@ export default function ProductsScreen({ route, navigation }) {
             }
           });
 
-          console.log('Loaded wishlist IDs:', Array.from(wishlistProductIds));
           setWishlistItems(wishlistProductIds);
         }
       }
@@ -124,6 +126,18 @@ export default function ProductsScreen({ route, navigation }) {
     } catch (error) {
       Alert.alert('Error', 'Failed to open link');
     }
+  };
+
+  const openImageViewer = (imageUri, title) => {
+    setCurrentImageUri(imageUri);
+    setCurrentImageTitle(title);
+    setImageViewerVisible(true);
+  };
+
+  const closeImageViewer = () => {
+    setImageViewerVisible(false);
+    setCurrentImageUri(null);
+    setCurrentImageTitle(null);
   };
 
   const toggleProductExpansion = async (productName, product) => {
@@ -306,11 +320,16 @@ export default function ProductsScreen({ route, navigation }) {
                         style={styles.listingCard}
                         onPress={() => openProductUrl(listing.url)}
                       >
-                        <Image
-                          source={{ uri: listing.image }}
-                          style={styles.listingImage}
-                          onError={() => console.log('Image load error for:', listing.image)}
-                        />
+                        <TouchableOpacity
+                          onPress={() => openImageViewer(listing.image, listing.name)}
+                          activeOpacity={0.8}
+                        >
+                          <Image
+                            source={{ uri: listing.image }}
+                            style={styles.listingImage}
+                            onError={() => console.log('Image load error for:', listing.image)}
+                          />
+                        </TouchableOpacity>
                         <View style={styles.listingInfo}>
                           <Text style={styles.listingName} numberOfLines={2}>
                             {listing.name}
@@ -420,6 +439,13 @@ export default function ProductsScreen({ route, navigation }) {
           <Text style={styles.visualizeButtonText}>🎨 Visualize Your Green Room</Text>
         </TouchableOpacity>
       </View>
+
+      <ImageViewer
+        visible={imageViewerVisible}
+        imageUri={currentImageUri}
+        title={currentImageTitle}
+        onClose={closeImageViewer}
+      />
     </ScrollView>
   );
 }

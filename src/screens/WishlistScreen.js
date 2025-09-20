@@ -16,6 +16,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { WishlistService } from '../services/WishlistService';
 import { AuthService } from '../services/AuthService';
+import ImageViewer from '../components/ImageViewer';
 
 export default function WishlistScreen({ navigation }) {
   const [wishlist, setWishlist] = useState(null);
@@ -26,6 +27,9 @@ export default function WishlistScreen({ navigation }) {
   const [editingNotes, setEditingNotes] = useState(null);
   const [notes, setNotes] = useState('');
   const [showNotesModal, setShowNotesModal] = useState(false);
+  const [imageViewerVisible, setImageViewerVisible] = useState(false);
+  const [currentImageUri, setCurrentImageUri] = useState(null);
+  const [currentImageTitle, setCurrentImageTitle] = useState(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -118,6 +122,18 @@ export default function WishlistScreen({ navigation }) {
     } catch (error) {
       Alert.alert('Error', 'Failed to open link');
     }
+  };
+
+  const openImageViewer = (imageUri, title) => {
+    setCurrentImageUri(imageUri);
+    setCurrentImageTitle(title);
+    setImageViewerVisible(true);
+  };
+
+  const closeImageViewer = () => {
+    setImageViewerVisible(false);
+    setCurrentImageUri(null);
+    setCurrentImageTitle(null);
   };
 
   const openNotesModal = (item) => {
@@ -223,11 +239,16 @@ export default function WishlistScreen({ navigation }) {
             style={styles.itemContent}
             onPress={() => openProductUrl(item.url)}
           >
-            <Image
-              source={{ uri: item.image }}
-              style={styles.itemImage}
-              onError={() => console.log('Image load error for:', item.image)}
-            />
+            <TouchableOpacity
+              onPress={() => openImageViewer(item.image, item.name)}
+              activeOpacity={0.8}
+            >
+              <Image
+                source={{ uri: item.image }}
+                style={styles.itemImage}
+                onError={() => console.log('Image load error for:', item.image)}
+              />
+            </TouchableOpacity>
             <View style={styles.itemInfo}>
               <Text style={styles.itemName} numberOfLines={2}>
                 {item.name}
@@ -307,10 +328,15 @@ export default function WishlistScreen({ navigation }) {
           <View style={styles.modalContent}>
             {editingNotes && (
               <View style={styles.editingItemInfo}>
-                <Image
-                  source={{ uri: editingNotes.image }}
-                  style={styles.editingItemImage}
-                />
+                <TouchableOpacity
+                  onPress={() => openImageViewer(editingNotes.image, editingNotes.name)}
+                  activeOpacity={0.8}
+                >
+                  <Image
+                    source={{ uri: editingNotes.image }}
+                    style={styles.editingItemImage}
+                  />
+                </TouchableOpacity>
                 <Text style={styles.editingItemName} numberOfLines={2}>
                   {editingNotes.name}
                 </Text>
@@ -345,6 +371,13 @@ export default function WishlistScreen({ navigation }) {
           </View>
         </View>
       </Modal>
+
+      <ImageViewer
+        visible={imageViewerVisible}
+        imageUri={currentImageUri}
+        title={currentImageTitle}
+        onClose={closeImageViewer}
+      />
     </ScrollView>
   );
 }

@@ -58,9 +58,6 @@ export class AuthService {
   // Register new user
   static async register(userData) {
     try {
-      console.log('Registering user with API URL:', this.API_URL);
-      console.log('Registration data:', userData);
-
       const response = await fetch(`${this.API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
@@ -69,17 +66,11 @@ export class AuthService {
         body: JSON.stringify(userData),
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-
       // Get the raw response text first
       const responseText = await response.text();
-      console.log('Raw response:', responseText);
-
       // Try to parse as JSON
       let data;
       try {
-        console.log(responseText);
         data = JSON.parse(responseText);
       } catch (parseError) {
         console.error('JSON parse error:', parseError);

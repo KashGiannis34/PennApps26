@@ -10,6 +10,7 @@ import {
   Alert
 } from 'react-native';
 import { GeminiService } from '../services/GeminiService';
+import ImageViewer from '../components/ImageViewer';
 
 export default function VisualizationScreen({ route, navigation }) {
   const { analysis, photoUri, photoBase64 } = route.params;
@@ -17,6 +18,9 @@ export default function VisualizationScreen({ route, navigation }) {
   const [generatedImageUrl, setGeneratedImageUrl] = useState(null);
   const [availableProducts, setAvailableProducts] = useState(analysis?.products || []);
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [imageViewerVisible, setImageViewerVisible] = useState(false);
+  const [currentImageUri, setCurrentImageUri] = useState(null);
+  const [currentImageTitle, setCurrentImageTitle] = useState(null);
 
   const addProductToSelection = (product) => {
     if (!selectedProducts.find(p => p.name === product.name)) {
@@ -91,6 +95,18 @@ export default function VisualizationScreen({ route, navigation }) {
     navigation.goBack();
   };
 
+  const openImageViewer = (imageUri, title) => {
+    setCurrentImageUri(imageUri);
+    setCurrentImageTitle(title);
+    setImageViewerVisible(true);
+  };
+
+  const closeImageViewer = () => {
+    setImageViewerVisible(false);
+    setCurrentImageUri(null);
+    setCurrentImageTitle(null);
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -103,7 +119,9 @@ export default function VisualizationScreen({ route, navigation }) {
       <View style={styles.comparisonContainer}>
         <View style={styles.imageSection}>
           <Text style={styles.imageLabel}>📸 Your Current Room</Text>
-          <Image source={{ uri: photoUri }} style={styles.roomImage} />
+          <TouchableOpacity onPress={() => openImageViewer(photoUri, 'Your Current Room')}>
+            <Image source={{ uri: photoUri }} style={styles.roomImage} />
+          </TouchableOpacity>
         </View>
 
         {loading ? (
@@ -117,7 +135,9 @@ export default function VisualizationScreen({ route, navigation }) {
         ) : generatedImageUrl ? (
           <View style={styles.imageSection}>
             <Text style={styles.imageLabel}>🌱 Your Sustainable Vision</Text>
-            <Image source={{ uri: generatedImageUrl }} style={styles.roomImage} />
+            <TouchableOpacity onPress={() => openImageViewer(generatedImageUrl, 'Your Sustainable Vision')}>
+              <Image source={{ uri: generatedImageUrl }} style={styles.roomImage} />
+            </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.fallbackSection}>
@@ -206,6 +226,13 @@ export default function VisualizationScreen({ route, navigation }) {
           <Text style={styles.tertiaryButtonText}>🏠 Analyze Another Room</Text>
         </TouchableOpacity>
       </View>
+
+      <ImageViewer
+        visible={imageViewerVisible}
+        imageUri={currentImageUri}
+        title={currentImageTitle}
+        onClose={closeImageViewer}
+      />
     </ScrollView>
   );
 }
