@@ -1,10 +1,6 @@
-# SustainaView - AI-Powered Sustainable Room Makeover
+# SustainaView - AI-Powered Sustainable Room Makeover 
 
 **Turn any room into an eco-friendly space effortlessly, with a little help from AI.**
-
-<img src="assets/icon.png" alt="icon" width="200"/>
-
-## App Screenshots
 
 <div align="center">
   <img src="assets/Product_Listings.png" alt="Product Listings" width="200" style="margin: 10px;"/>
@@ -19,6 +15,8 @@
 
 SustainaView is a mobile app that makes sustainable interior design easy and fun. Just snap a photo of your room, and our AI will give you personalized, eco-friendly suggestions, show you what your space could look like after a green makeover, and even break down the costs for you. It’s like having a sustainability expert and designer in your pocket!
 
+<img src="assets/icon.png" alt="icon" width="200"/>
+
 ### **Project Members**
 - **[Arjun Suryawanshi](https://github.com/arjunsur12)** - Frontend Development and UI/UX Design
 - **[Chinmay Govind](https://github.com/chinmaygovind)** - Full-Stack Developer and AI Integration
@@ -26,15 +24,20 @@ SustainaView is a mobile app that makes sustainable interior design easy and fun
 
 ---
 
-## Motivation and Vision
+## Motivation 
+- Energy Waste & Unsustainable Furniture Choices lead to a Massive Carbon Footprint
+- The average person won't know which green tech and furniture is economical
+- Existing apps can only do product recommendations, not holistic room-aware suggestions  
 
-In an era where climate consciousness meets technological innovation, SustainaView bridges the gap between environmental responsibility and accessible interior design. Our app empowers users to make informed, sustainable choices for their living spaces while providing:
+**Interior design generates 10.5 million tons of waste a year in the US alone.**
 
-- **Intelligent Analysis**: AI-powered room assessment and sustainability scoring
-- **Cost-Effective Solutions**: Price comparisons across multiple vendors including local and second-hand options
-- **Visual Transformation**: AI-generated before/after visualizations of sustainable makeovers
-- **Community Sharing**: Save and share your eco-friendly transformations with friends
-- **Actionable Insights**: Direct links to purchase recommended sustainable products
+Our solution is **SustainaView**, an app that lets you take a photo of your room, and visualizes suggestions for green products. The app uses Gemini and SerpAPI to generate product suggestions, providing green substitutes for items in your room. You can select items you like and _Transform_ your room, using Gemini's Nano Banana model to visualize an image of the room with green products.
+
+# Features
+- Product Suggestions with Quick Buy Links
+- Product Wishlist and Price Comparisons
+- Transformed Room Images & Cloud-saved Portfolio
+- Authentication & Sharing Features
 
 ---
 
