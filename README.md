@@ -90,6 +90,7 @@ In an era where climate consciousness meets technological innovation, SustainaVi
 - **npm** - Package management and dependency handling
 - **Expo CLI** - Development server and build tools
 - **VS Code** - Integrated development environment
+- **nGrok** - used API gateway to connect external phone to local express server for development
 
 ---
 
