@@ -7,7 +7,10 @@
 ## App Screenshots
 
 <div align="center">
+  <img src="assets/Product_Listings.png" alt="Product Listings" width="200" style="margin: 10px;"/>
   <img src="assets/Sustainable_Vision.png" alt="Sustainable Vision" width="200" style="margin: 10px;"/>
+  <img src="assets/Tech_Stack.png" alt="Tech Stack" width="200" style="margin: 10px;"/>
+  <img src="assets/Wishlist_UI.png" alt="Wishlist UI" width="200" style="margin: 10px;"/>
 </div>
 
 ## Overview
