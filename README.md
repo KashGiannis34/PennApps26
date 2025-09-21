@@ -93,56 +93,19 @@ In an era where climate consciousness meets technological innovation, SustainaVi
 
 ---
 
-## Competition Categories and Why We Deserve to Win
+## Why We Deserve to Win
 
-### **Primary Category: Sustainability**
-**Why SustainaView Deserves This Award:**
-- **Direct Environmental Impact**: Our app directly promotes sustainable consumption by making eco-friendly choices accessible and visually appealing
-- **Measurable Results**: Users receive sustainability scores and potential environmental savings for each transformation
-- **Behavioral Change**: By gamifying sustainable interior design, we encourage long-term eco-conscious decision making
-- **Local Economy Support**: Integration with local and second-hand retailers reduces shipping emissions and supports community businesses
-- **Educational Component**: Users learn about sustainable materials and their environmental benefits through detailed product analysis
+**Sustainability Track**: Direct environmental impact through gamified sustainable interior design, measurable results with sustainability scores, and support for local businesses to reduce shipping emissions.
 
-### **Track: Best Use of AI**
-**Our AI Integration Excellence:**
-- **Multi-Modal AI Processing**: Combines computer vision for room analysis with natural language processing for recommendations
-- **Contextual Intelligence**: AI understands room types, existing furniture, and user preferences to provide personalized suggestions
-- **Dynamic Image Generation**: Creates realistic visualizations of sustainable transformations using advanced AI models
-- **Intelligent Product Matching**: AI analyzes room aesthetics and suggests compatible eco-friendly alternatives
-- **Continuous Learning**: System improves recommendations based on user interactions and preferences
+**Best Use of AI**: Multi-modal AI processing combining computer vision for room analysis with intelligent product recommendations and realistic transformation visualizations.
 
-### **Track: Best Use of Computer Vision**
-**Computer Vision Innovation:**
-- **Room Recognition**: Accurately identifies room types, furniture, and spatial layouts from single photos
-- **Object Detection**: Recognizes individual furniture pieces, lighting, and decor elements
-- **Sustainability Assessment**: Evaluates existing items for environmental impact and replacement opportunities
-- **Spatial Analysis**: Understands room dimensions and flow for optimal sustainable design suggestions
-- **Quality Processing**: Handles various lighting conditions and photo qualities for consistent analysis
+**Best Use of Computer Vision**: Accurate room recognition, object detection, and sustainability assessment from single photos with quality processing across various lighting conditions.
 
-### **Track: Best Design**
-**Design Excellence:**
-- **Intuitive User Experience**: Streamlined workflow from photo capture to transformation visualization
-- **Beautiful UI/UX**: Clean, modern interface with smooth animations and responsive design
-- **Accessibility First**: Designed for users of all technical skill levels with clear visual feedback
-- **Cross-Platform Consistency**: Seamless experience across iOS and Android devices
-- **Visual Storytelling**: Before/after comparisons and transformation galleries create engaging user journeys
+**Best Design**: Intuitive cross-platform UX with streamlined photo-to-visualization workflow and engaging visual storytelling through before/after comparisons.
 
-### **MLH Prize: Best Use of Gemini API**
-**Gemini API Mastery:**
-- **Advanced Vision Processing**: Leverages Gemini's multimodal capabilities for comprehensive room analysis
-- **Intelligent Recommendations**: Uses Gemini's reasoning capabilities to suggest contextually appropriate sustainable alternatives
-- **Natural Conversations**: Integrates Gemini's language understanding for user-friendly explanations of sustainability benefits
-- **Complex Queries**: Processes intricate requests combining visual analysis with product research and cost calculations
-- **Scalable Integration**: Robust error handling and response processing for production-ready Gemini API usage
+**Best Use of Gemini API**: Advanced vision processing for comprehensive room analysis, intelligent recommendations, and scalable integration with robust error handling.
 
-### **MLH Prize: Best Use of MongoDB Atlas**
-**MongoDB Atlas Implementation:**
-- **Scalable Architecture**: Efficient document-based storage for user profiles, transformations, and product data
-- **Real-Time Sync**: Seamless data synchronization across user sessions and devices
-- **Flexible Schema**: Adaptable data models supporting diverse room types and product categories
-- **Performance Optimization**: Indexed queries and aggregation pipelines for fast data retrieval
-- **Cloud-Native Design**: Leverages Atlas's managed infrastructure for reliability and automatic scaling
-- **Security Integration**: Proper authentication workflows with encrypted data storage
+**Best Use of MongoDB Atlas**: Efficient document-based storage with flexible schemas, real-time sync across devices, and cloud-native design with proper authentication workflows.
 
 ---
 
