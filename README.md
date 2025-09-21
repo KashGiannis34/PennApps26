@@ -26,15 +26,19 @@ SustainaView is a mobile app that makes sustainable interior design easy and fun
 
 ---
 
-## Motivation and Vision
+## Motivation 
+- Energy Waste & Unsustainable Furniture Choices lead to a Massive Carbon Footprint
+- The average person won't know which green tech and furniture is economical
+- Existing apps can only do product recommendations, not holistic room-aware suggestions
+**Interior design generates 10.5 million tons of waste a year in the US alone.**
 
-In an era where climate consciousness meets technological innovation, SustainaView bridges the gap between environmental responsibility and accessible interior design. Our app empowers users to make informed, sustainable choices for their living spaces while providing:
+Our solution is **SustainaView**, an app that lets you take a photo of your room, and visualizes suggestions for green products. The app uses Gemini and SerpAPI to generate product suggestions, providing green substitutes for items in your room. You can select items you like and _Transform_ your room, using Gemini's Nano Banana model to visualize an image of the room with green products.
 
-- **Intelligent Analysis**: AI-powered room assessment and sustainability scoring
-- **Cost-Effective Solutions**: Price comparisons across multiple vendors including local and second-hand options
-- **Visual Transformation**: AI-generated before/after visualizations of sustainable makeovers
-- **Community Sharing**: Save and share your eco-friendly transformations with friends
-- **Actionable Insights**: Direct links to purchase recommended sustainable products
+# Features
+- Product Suggestions with Quick Buy Links
+- Product Wishlist and Price Comparisons
+- Transformed Room Images & Cloud-saved Portfolio
+- Authentication & Sharing Features
 
 ---
 
