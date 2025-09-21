@@ -1,4 +1,4 @@
-# SustainaView - AI-Powered Sustainable Room Makeover 
+# SustainaView - AI-Powered Sustainable Room Makeover
 
 **Turn any room into an eco-friendly space effortlessly, with a little help from AI.**
 
@@ -24,10 +24,10 @@ SustainaView is a mobile app that makes sustainable interior design easy and fun
 
 ---
 
-## Motivation 
+## Motivation
 - Energy Waste & Unsustainable Furniture Choices lead to a Massive Carbon Footprint
 - The average person won't know which green tech and furniture is economical
-- Existing apps can only do product recommendations, not holistic room-aware suggestions  
+- Existing apps can only do product recommendations, not holistic room-aware suggestions
 
 **Interior design generates 10.5 million tons of waste a year in the US alone.**
 
@@ -85,8 +85,8 @@ Our solution is **SustainaView**, an app that lets you take a photo of your room
 
 ### **External Integrations**
 - **SerpAPI** - Real-time product search across multiple e-commerce platforms
-- **Google Shopping** - Product price comparison and availability
-- **Local Business APIs** - Integration with local and second-hand retailers
+- **Google Shopping API** - Product price comparison and availability
+- **Quick Search Links** - Integration with Amazon, eBay, and Google to have quick search links for each product name
 
 ### **Development and Deployment**
 - **Git** - Version control and collaborative development
