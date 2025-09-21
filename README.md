@@ -4,14 +4,20 @@
 
 <img src="assets/icon.png" alt="icon" width="200"/>
 
+## App Screenshots
+
+<div align="center">
+  <img src="assets/Sustainable_Vision.png" alt="Sustainable Vision" width="200" style="margin: 10px;"/>
+</div>
+
 ## Overview
 
 SustainaView is a mobile app that makes sustainable interior design easy and fun. Just snap a photo of your room, and our AI will give you personalized, eco-friendly suggestions, show you what your space could look like after a green makeover, and even break down the costs for you. It’s like having a sustainability expert and designer in your pocket!
 
 ### **Project Members**
-- **Arjun Suryawanshi** - Frontend Development and UI/UX Design
-- **Chinmay Govind** - Full-Stack Developer and AI Integration
-- **Akash Sarode** - Backend Architecture and Database Design
+- **[Arjun Suryawanshi](https://github.com/arjunsur12)** - Frontend Development and UI/UX Design
+- **[Chinmay Govind](https://github.com/chinmaygovind)** - Full-Stack Developer and AI Integration
+- **[Akash Sarode](https://github.com/KashGiannis34)** - Backend Architecture and Database Design
 
 ---
 
