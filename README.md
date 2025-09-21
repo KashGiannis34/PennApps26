@@ -12,7 +12,7 @@
   <img src="assets/Wishlist_UI.png" alt="Wishlist UI" width="200" style="margin: 10px;"/>
 </div>
 <div align="center">
-<img src="assets/Tech_Stack.png" alt="Tech Stack" width="200" style="margin: 10px;"/>
+<img src="assets/Tech_Stack.png" alt="Tech Stack" width="700" style="margin: 10px;"/>
 </div>
 
 ## Overview
