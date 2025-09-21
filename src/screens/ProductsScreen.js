@@ -420,7 +420,7 @@ export default function ProductsScreen({ route, navigation }) {
             style={styles.wishlistNavButton}
             onPress={() => navigation.navigate('Wishlist')}
           >
-            <Text style={styles.wishlistNavButtonText}>💚 My Wishlist</Text>
+            <Text style={styles.wishlistNavButtonText}>My Wishlist</Text>
           </TouchableOpacity>
         )}
       </View>

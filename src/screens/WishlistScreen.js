@@ -227,7 +227,7 @@ export default function WishlistScreen({ navigation }) {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <View style={styles.header}>
-        <Text style={styles.title}>💚 My Wishlist</Text>
+        <Text style={styles.title}>My Wishlist</Text>
         <Text style={styles.subtitle}>
           {wishlist.items.length} sustainable {wishlist.items.length === 1 ? 'item' : 'items'}
         </Text>

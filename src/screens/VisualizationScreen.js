@@ -10,6 +10,8 @@ import {
   Alert
 } from 'react-native';
 import { GeminiService } from '../services/GeminiService';
+import { GreenovationsService } from '../services/GreenovationsService';
+import { AuthService } from '../services/AuthService';
 import ImageViewer from '../components/ImageViewer';
 
 export default function VisualizationScreen({ route, navigation }) {
@@ -76,6 +78,58 @@ export default function VisualizationScreen({ route, navigation }) {
         'An error occurred while generating your visualization. Please try again.',
         [{ text: 'OK' }]
       );
+    }
+  };
+
+  const saveTransformation = async () => {
+    if (!generatedImageUrl) {
+      Alert.alert(
+        'No Visualization to Save',
+        'Please generate a room visualization first.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      const isAuthenticated = await AuthService.isAuthenticated();
+      if (!isAuthenticated) {
+        Alert.alert(
+          'Authentication Required',
+          'Please log in to save your room transformation.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Go to Login', onPress: () => navigation.navigate('Login') }
+          ]
+        );
+        return;
+      }
+
+      const transformationData = {
+        name: `Room Transformation ${new Date().toLocaleDateString()}`,
+        description: `Sustainable makeover with ${selectedProducts.length} eco-friendly products`,
+        notes: `Products: ${selectedProducts.map(p => p.name).join(', ')}`,
+        originalImage: photoBase64, // This will be uploaded to S3 and converted to signed URL
+        generatedImage: generatedImageUrl // This will be uploaded to S3 and converted to signed URL
+      };
+
+      const result = await GreenovationsService.saveGreenovation(transformationData);
+
+      if (result.success) {
+        Alert.alert(
+          'Transformation Saved! 🎉',
+          'Your sustainable room transformation has been saved to your collection.',
+          [
+            { text: 'View All Transformations', onPress: () => navigation.navigate('Greenovations') },
+            { text: 'OK', style: 'default' }
+          ]
+        );
+      } else {
+        Alert.alert('Save Failed', result.error || 'Failed to save transformation');
+      }
+    } catch (error) {
+      console.error('Save transformation error:', error);
+      Alert.alert('Error', 'An error occurred while saving your transformation');
     }
   };
 
@@ -218,12 +272,22 @@ export default function VisualizationScreen({ route, navigation }) {
       </View>
 
       <View style={styles.actionButtons}>
+        {generatedImageUrl && (
+          <TouchableOpacity style={styles.primaryButton} onPress={saveTransformation}>
+            <Text style={styles.primaryButtonText}>💾 Save Transformation</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity style={styles.secondaryButton} onPress={viewProductsAgain}>
           <Text style={styles.secondaryButtonText}>🛒 View All Product Details</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.tertiaryButton} onPress={startOver}>
           <Text style={styles.tertiaryButtonText}>🏠 Analyze Another Room</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.tertiaryButton} onPress={() => navigation.navigate('Greenovations')}>
+          <Text style={styles.tertiaryButtonText}>🌱 View My Transformations</Text>
         </TouchableOpacity>
       </View>
 
@@ -447,6 +511,22 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 15,
     paddingBottom: 40,
+  },
+  primaryButton: {
+    backgroundColor: '#27ae60',
+    paddingVertical: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   secondaryButton: {
     backgroundColor: '#fff',

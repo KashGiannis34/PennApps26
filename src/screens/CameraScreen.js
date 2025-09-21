@@ -96,7 +96,7 @@ export default function CameraScreen({ navigation }) {
       <View style={styles.overlay}>
         <View style={styles.topControls}>
           <Text style={styles.instructionText}>
-            📸 Point camera at your room and tap to capture
+            Point camera at your room and tap to capture
           </Text>
         </View>
 

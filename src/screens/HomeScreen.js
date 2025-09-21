@@ -9,7 +9,8 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  Modal
+  Modal,
+  Image
 } from 'react-native';
 import { AuthService } from '../services/AuthService';
 
@@ -157,13 +158,19 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.authSection}>
           {isAuthenticated ? (
             <View style={styles.userInfo}>
-              <Text style={styles.welcomeText}>Welcome back, {user?.firstName || user?.username}! 👋</Text>
+              <Text style={styles.welcomeText}>Welcome back, {user?.firstName || user?.username}!</Text>
               <View style={styles.userActions}>
                 <TouchableOpacity
                   style={styles.wishlistButton}
                   onPress={() => navigation.navigate('Wishlist')}
                 >
-                  <Text style={styles.wishlistButtonText}>💚 My Wishlist</Text>
+                  <Text style={styles.wishlistButtonText}>My Wishlist</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.greenovationsButton}
+                  onPress={() => navigation.navigate('Greenovations')}
+                >
+                  <Text style={styles.greenovationsButtonText}>My Transformations</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                   <Text style={styles.logoutButtonText}>Logout</Text>
@@ -173,18 +180,21 @@ export default function HomeScreen({ navigation }) {
           ) : (
             <View style={styles.loginPrompt}>
               <Text style={styles.loginPromptText}>Sign in to save your wishlist and track your sustainable journey!</Text>
-              <TouchableOpacity
-                style={styles.authButton}
-                onPress={() => setShowAuthModal(true)}
-              >
-                <Text style={styles.authButtonText}>Sign In / Register</Text>
-              </TouchableOpacity>
+              <View style={styles.loginRow}>
+                <TouchableOpacity
+                  style={styles.authButton}
+                  onPress={() => setShowAuthModal(true)}
+                >
+                  <Text style={styles.authButtonText}>Sign In / Register</Text>
+                </TouchableOpacity>
+              </View>
             </View>
+
           )}
         </View>
 
         <View style={styles.header}>
-          <Text style={styles.title}>🌱 Make Your Room Sustainable</Text>
+          <Text style={styles.title}>Make Your Room Sustainable</Text>
           <Text style={styles.subtitle}>
             Take a photo of your room and discover eco-friendly products to make it more sustainable!
           </Text>
@@ -220,7 +230,7 @@ export default function HomeScreen({ navigation }) {
           style={styles.startButton}
           onPress={() => navigation.navigate('Camera')}
         >
-          <Text style={styles.startButtonText}>📸 Start Room Analysis</Text>
+          <Text style={styles.startButtonText}>Start Room Analysis</Text>
         </TouchableOpacity>
 
         <View style={styles.infoSection}>
@@ -326,6 +336,11 @@ export default function HomeScreen({ navigation }) {
                 }
               </Text>
             </TouchableOpacity>
+            <Image
+                source={require('../../assets/icon.png')}
+                style={styles.appIcon}
+                resizeMode="contain"
+            />
           </ScrollView>
         </View>
       </Modal>
@@ -345,6 +360,13 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 30,
+  },
+  appIcon: {
+    width: 250,
+    height: 250,
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: -10,
   },
   title: {
     fontSize: 28,
@@ -455,31 +477,54 @@ const styles = StyleSheet.create({
   },
   userActions: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   wishlistButton: {
     backgroundColor: '#4a7c59',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 5,
-    flex: 1,
+    minWidth: 90,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   wishlistButtonText: {
     color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  greenovationsButton: {
+    backgroundColor: '#27ae60',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 5,
+    minWidth: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  greenovationsButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   logoutButton: {
     backgroundColor: '#dc3545',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 5,
+    minWidth: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logoutButtonText: {
     color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   loginPrompt: {
     backgroundColor: '#fff3cd',
@@ -567,5 +612,17 @@ const styles = StyleSheet.create({
     color: '#4a7c59',
     fontSize: 16,
     textDecorationLine: 'underline',
+  },
+  loginRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    gap: 10,
+  },
+  loginIcon: {
+    width: 36,
+    height: 36,
+    marginRight: 10,
   },
 });

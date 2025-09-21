@@ -47,7 +47,7 @@ export default function AnalysisScreen({ route, navigation }) {
       <View style={styles.loadingContainer}>
         <Image source={{ uri: photoUri }} style={styles.analysisImage} />
         <ActivityIndicator size="large" color="#4a7c59" style={styles.loader} />
-        <Text style={styles.loadingText}>🤖 AI is analyzing your room...</Text>
+        <Text style={styles.loadingText}>AI is analyzing your room...</Text>
         <Text style={styles.loadingSubtext}>
           Looking for sustainability opportunities and eco-friendly improvements
         </Text>
@@ -74,7 +74,7 @@ export default function AnalysisScreen({ route, navigation }) {
         <View style={styles.scoreCard}>
           <Text style={styles.scoreTitle}>Sustainability Score</Text>
           <Text style={styles.scoreValue}>{analysis.sustainabilityScore}/10</Text>
-          <Text style={styles.savingsText}>💰 {analysis.potentialSavings}</Text>
+          <Text style={styles.savingsText}>{analysis.potentialSavings}</Text>
         </View>
 
         <View style={styles.analysisCard}>

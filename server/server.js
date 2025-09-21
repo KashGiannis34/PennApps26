@@ -7,6 +7,7 @@ require('dotenv').config();
 // Import routes
 const authRoutes = require('./routes/auth');
 const wishlistRoutes = require('./routes/wishlist');
+const greenovationsRoutes = require('./routes/greenovations');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,7 +43,10 @@ app.use(cors({
   ],
   credentials: true
 }));
-app.use(express.json());
+
+// Configure body parser with increased limits for image uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // MongoDB connection
 const connectDB = async () => {
@@ -75,6 +79,22 @@ const connectDB = async () => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/greenovations', greenovationsRoutes);
+
+// Image serving routes
+const { getImage } = require('./middleware/imageStorage');
+app.get('/api/images/:filename', getImage);
+
+// Optional: Direct S3 image serving route for development/testing
+app.get('/api/dev/images/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const imageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/sustainaView/${filename}`;
+    res.redirect(imageUrl);
+  } catch (error) {
+    res.status(404).json({ error: 'Image not found' });
+  }
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
