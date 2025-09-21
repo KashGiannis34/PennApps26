@@ -86,7 +86,7 @@ Our solution is **SustainaView**, an app that lets you take a photo of your room
 ### **External Integrations**
 - **SerpAPI** - Real-time product search across multiple e-commerce platforms
 - **Google Shopping API** - Product price comparison and availability
-- **Quick Search Links** - Integration with Amazon, eBay, and Google to have quick search links for each product name
+- **Quick Search Links** - Integration with Amazon, eBay, and Google to have quick search links for each product
 
 ### **Development and Deployment**
 - **Git** - Version control and collaborative development
