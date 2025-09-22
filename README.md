@@ -1,5 +1,7 @@
 # SustainaView - AI-Powered Sustainable Room Makeover
 
+**[Demo Video](https://www.youtube.com/watch?v=pTdhk9g6eUY)**
+
 **Turn any room into an eco-friendly space effortlessly, with a little help from AI.**
 
 <div align="center">
@@ -140,14 +142,6 @@ Our solution is **SustainaView**, an app that lets you take a photo of your room
 4. **Educational Value**: Users learn about sustainable materials and their benefits through interactive experiences
 5. **Community Focus**: Shareable transformations create a network of sustainability-minded individuals
 6. **Actionable Results**: Direct purchasing links and cost breakdowns remove barriers to sustainable choices
-
----
-
-## Impact and Future Vision
-
-SustainaView represents more than just an app—it's a movement toward accessible, intelligent, and beautiful sustainable living. By combining cutting-edge AI with practical interior design solutions, we're making environmental consciousness both achievable and inspiring for everyone.
-
-**Join us in transforming spaces, one room at a time. **
 
 ---
 
